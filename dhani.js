@@ -478,6 +478,13 @@ menu =
 ⊛ ${prefix}upswvideo
 ⊛ ${prefix}upswimage
 
+*( STICKER 𝗠𝗘𝗡𝗨 )*
+
+⊛ ${prefix}sticker [Reply]
+⊛ ${prefix}attp
+⊛ ${prefix}smeme
+⊛ ${prefix}toimg
+
 *( THANKS TO )*
 => ORTU GW
 => ABIL BOTZ
@@ -1119,7 +1126,115 @@ Dhani.sendMessage(from, 'List Online:\n' + online.map(v => '- @' + v.replace(/@.
 fakeyt(`${e}`)
 }
 break
-
+case 'exif':
+                    if (!isOwner && !mek.key.fromMe) return reply(mess.only.ownerB)
+					const exifff = `${args.join(' ')}`
+					const namaPack = exifff.split('|')[0]
+					const authorPack = exifff.split('|')[1]
+					exif.create(namaPack, authorPack)
+					await reply('Done gan')
+				break
+case 'sticker':
+					case 'stiker':
+					case 's':
+					if (!isRegistered) return reply(`Registrasi Dulu Kak Ketik .verify`)
+						if (isMedia && !mek.message.videoMessage || isQuotedImage) {
+							const encmedia = isQuotedImage ? JSON.parse(JSON.stringify(mek).replace('quotedM', 'm')).message.extendedTextMessage.contextInfo : mek
+							const media = await helga.downloadAndSaveMediaMessage(encmedia, `./sticker/${sender}`)
+							await ffmpeg(`${media}`)
+									.input(media)
+									.on('start', function (cmd) {
+										console.log(`Started : ${cmd}`)
+									})
+									.on('error', function (err) {
+										console.log(`Error : ${err}`)
+										fs.unlinkSync(media)
+										reply(mess.error.api)
+									})
+									.on('end', function () {
+										console.log('Finish')
+										exec(`webpmux -set exif ./sticker/data.exif ./sticker/${sender}.webp -o ./sticker/${sender}.webp`, async (error) => {
+											if (error) return reply(mess.error.api)
+											helga.sendMessage(from, fs.readFileSync(`./sticker/${sender}.webp`), sticker, {quoted: mek})
+											fs.unlinkSync(media)	
+											fs.unlinkSync(`./sticker/${sender}.webp`)	
+										})
+									})
+									.addOutputOptions([`-vcodec`,`libwebp`,`-vf`,`scale='min(320,iw)':min'(320,ih)':force_original_aspect_ratio=decrease,fps=15, pad=320:320:-1:-1:color=white@0.0, split [a][b]; [a] palettegen=reserve_transparent=on:transparency_color=ffffff [p]; [b][p] paletteuse`])
+									.toFormat('webp')
+									.save(`./sticker/${sender}.webp`)
+						} else if ((isMedia && mek.message.videoMessage.fileLength < 10000000 || isQuotedVideo && mek.message.extendedTextMessage.contextInfo.quotedMessage.videoMessage.fileLength < 10000000)) {
+							const encmedia = isQuotedVideo ? JSON.parse(JSON.stringify(mek).replace('quotedM', 'm')).message.extendedTextMessage.contextInfo : mek
+							const media = await helga.downloadAndSaveMediaMessage(encmedia, `./sticker/${sender}`)
+							reply(mess.wait)
+								await ffmpeg(`${media}`)
+									.inputFormat(media.split('.')[4])
+									.on('start', function (cmd) {
+										console.log(`Started : ${cmd}`)
+									})
+									.on('error', function (err) {
+										console.log(`Error : ${err}`)
+										fs.unlinkSync(media)
+										tipe = media.endsWith('.mp4') ? 'video' : 'gif'
+										reply(mess.error.api)
+									})
+									.on('end', function () {
+										console.log('Finish')
+										exec(`webpmux -set exif ./sticker/data.exif ./sticker/${sender}.webp -o ./sticker/${sender}.webp`, async (error) => {
+											if (error) return reply(mess.error.api)
+											helga.sendMessage(from, fs.readFileSync(`./sticker/${sender}.webp`), sticker, {quoted: mek})
+											fs.unlinkSync(media)
+											fs.unlinkSync(`./sticker/${sender}.webp`)
+										})
+									})
+									.addOutputOptions([`-vcodec`,`libwebp`,`-vf`,`scale='min(320,iw)':min'(320,ih)':force_original_aspect_ratio=decrease,fps=15, pad=320:320:-1:-1:color=white@0.0, split [a][b]; [a] palettegen=reserve_transparent=on:transparency_color=ffffff [p]; [b][p] paletteuse`])
+									.toFormat('webp')
+									.save(`./sticker/${sender}.webp`)
+						} else {
+							reply(`Kirim gambar/video dengan caption ${prefix}sticker atau tag gambar/video yang sudah dikirim\nNote : Durasi video maximal 10 detik`)
+						}
+						break
+					    case 'toimg':
+				case 'tomedia':
+              if (!isRegistered) return reply(`Registrasi dulu Kak ketik .verify`)
+					if (!isQuotedSticker) return reply('Reply stiker nya')
+					if (mek.message.extendedTextMessage.contextInfo.quotedMessage.stickerMessage.isAnimated === true){
+						const encmedia = JSON.parse(JSON.stringify(mek).replace('quotedM','m')).message.extendedTextMessage.contextInfo
+						const media = await helga.downloadAndSaveMediaMessage(encmedia)
+						const upload = await uploadimg(media, Date.now() + '.webp')
+						console.log(upload)
+						reply(`${upload.result.image}`)
+						const rume = await axios.get(`http://nzcha-apii.herokuapp.com/webp-to-mp4?url=${upload.result.image}`)
+						console.log(rume.data)
+						sendMediaURL(from, rume.data.result)
+					} else {
+						const encmedia = JSON.parse(JSON.stringify(mek).replace('quotedM','m')).message.extendedTextMessage.contextInfo
+						const media = await helga.downloadAndSaveMediaMessage(encmedia)
+						ran = '1000.png'
+						exec(`ffmpeg -i ${media} ${ran}`, (err) => {
+							fs.unlinkSync(media)
+							if (err) return reply(mess.error.api)
+							buffer = fs.readFileSync(ran)
+							helga.sendMessage(from, buffer, image, {quoted: mek})
+							fs.unlinkSync(ran)
+						})
+					}
+					break
+					case 'attp':
+              if (!isRegistered) return reply(`Registrasi dulu Kak ketik .verify`)
+					if (!c) return reply(`Teks Nya Mana Kak?\nContoh :\n${prefix}attp ZukaChan`)
+					atetepe = await getBuffer(`https://hardianto.xyz/api/ttpcustom?text=${encodeURIComponent(c)}&color=black&apikey=hardianto`)
+					helga.sendMessage(from, atetepe, sticker, { quoted: mek })
+					break             
+            case 'hidetag':
+            if (!isOwner && !mek.key.fromMe) return reply(mess.only.ownerB)
+            ht = body.slice(9)
+                members_id = []
+				for (let mem of groupMembers) {
+					members_id.push(mem.jid)
+				}
+                mentions(ht, members_id, false)
+                break
 //━━━━━━━━━━━━━━━[ AKHIR DARI SEMUA FITUR ]━━━━━━━━━━━━━━━━━//
 				
 default:
